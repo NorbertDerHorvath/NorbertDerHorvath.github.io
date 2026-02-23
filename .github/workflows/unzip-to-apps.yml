@@ -1,4 +1,4 @@
-name: Unzip ZIPs into /apps
+name: Unzip ZIPs and update index
 
 on:
   push:
@@ -10,88 +10,110 @@ permissions:
   contents: write
 
 jobs:
-  unzip:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Prepare tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip rsync
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y unzip rsync
 
-      - name: Unzip changed ZIPs
+      - name: Unzip ZIPs into /apps
         run: |
           set -euo pipefail
-          mkdir -p apps
-          mkdir -p /tmp/unzip_work
+          mkdir -p apps /tmp/unzip
 
-          # Feldolgozunk MINDEN zipet a zips/ alatt (egyszerű és megbízható)
           shopt -s nullglob
           for z in zips/**/*.zip zips/*.zip; do
-            echo "==> Processing: $z"
-            base="$(basename "$z" .zip)"
-            target="apps/$base"
+            echo "==> Processing $z"
+            app="$(basename "$z" .zip)"
+            rm -rf /tmp/unzip/*
+            unzip -q "$z" -d /tmp/unzip
 
-            rm -rf /tmp/unzip_work/*
-            mkdir -p "/tmp/unzip_work/$base"
-
-            unzip -q "$z" -d "/tmp/unzip_work/$base"
-
-            # 1) Ha egyetlen top-level mappa van, lépjünk bele (pl. dist vagy projectname)
-            top_count=$(find "/tmp/unzip_work/$base" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')
-            if [ "$top_count" = "1" ]; then
-              only_item="$(find "/tmp/unzip_work/$base" -mindepth 1 -maxdepth 1)"
-              if [ -d "$only_item" ]; then
-                echo "   Single top-level folder detected: $only_item"
-                workdir="$only_item"
-              else
-                workdir="/tmp/unzip_work/$base"
-              fi
-            else
-              workdir="/tmp/unzip_work/$base"
+            src="/tmp/unzip"
+            if [ -f /tmp/unzip/dist/index.html ]; then
+              src="/tmp/unzip/dist"
             fi
 
-            # 2) Ha van dist/index.html, akkor a dist tartalmát tegyük ki app rootba
-            if [ -f "$workdir/dist/index.html" ]; then
-              echo "   dist/index.html found → using dist/ as web root"
-              src="$workdir/dist"
-            else
-              src="$workdir"
-            fi
-
-            # 3) Biztonság: kell index.html valahol a kiválasztott src-ben
             if [ ! -f "$src/index.html" ]; then
-              echo "❌ ERROR: Nem találok index.html-t a ZIP-ben a megfelelő helyen."
-              echo "   A ZIP gyökerében (vagy dist/ alatt) legyen index.html."
-              echo "   ZIP: $z"
+              echo "❌ index.html hiányzik a ZIP-ben: $z"
               exit 1
             fi
 
-            # 4) Régi verzió törlés + új szinkron
-            rm -rf "$target"
-            mkdir -p "$target"
-            rsync -a --delete "$src"/ "$target"/
+            rm -rf "apps/$app"
+            mkdir -p "apps/$app"
+            rsync -a --delete "$src"/ "apps/$app"/
 
-            echo "✅ Extracted to: $target"
+            echo "✅ App frissítve: $app"
           done
 
-          # GitHub Pages + Jekyll megkerülés (biztos ami biztos)
-          touch .nojekyll
-
-      - name: Commit & push extracted apps
+      - name: Generate index.html (auto app list + upload button)
         run: |
           set -e
+          cat > index.html <<'HTML'
+          <!doctype html>
+          <html lang="hu">
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width,initial-scale=1" />
+            <title>NorbApp</title>
+            <style>
+              body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;background:#0b1220;color:#e8eefc}
+              .wrap{max-width:980px;margin:0 auto;padding:28px}
+              .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+              h1{margin:0;font-size:28px}
+              p{opacity:.9}
+              .btn{display:inline-block;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.25);
+                   text-decoration:none;color:inherit;background:rgba(255,255,255,.06)}
+              .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}
+              a.app{display:block;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.12);
+                    background:rgba(255,255,255,.06);text-decoration:none;color:inherit}
+              a.app:hover{border-color:rgba(120,220,220,.6)}
+              .small{font-size:12px;opacity:.75}
+            </style>
+          </head>
+          <body>
+            <div class="wrap">
+              <div class="top">
+                <div>
+                  <h1>NorbApp</h1>
+                  <p>Elérhető appok:</p>
+                </div>
+                <div>
+                  <a class="btn" href="https://github.com/NorbertDerHorvath/NorbertDerHorvath.github.io/upload/main/zips" target="_blank" rel="noopener">
+                    ⬆ ZIP feltöltés
+                  </a>
+                  <div class="small">(GitHub bejelentkezés szükséges)</div>
+                </div>
+              </div>
+
+              <div class="grid">
+          HTML
+
+          shopt -s nullglob
+          for d in apps/*; do
+            if [ -d "$d" ]; then
+              name="$(basename "$d")"
+              echo "<a class=\"app\" href=\"/apps/$name/\">$name</a>" >> index.html
+            fi
+          done
+
+          cat >> index.html <<'HTML'
+              </div>
+            </div>
+          </body>
+          </html>
+          HTML
+
+          touch .nojekyll
+
+      - name: Commit & push changes
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          if git status --porcelain | grep -q .; then
-            git add -A
-            git commit -m "Auto-extract ZIPs to /apps"
-            git push
-          else
-            echo "No changes to commit."
-          fi
+          git add -A
+          git commit -m "Auto unzip ZIPs and update index" || echo "No changes to commit"
+          git push
