@@ -1,50 +1,97 @@
-<div class="sections">
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NorbApp</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;background:#0b1220;color:#e8eefc}
+    .wrap{max-width:980px;margin:0 auto;padding:28px}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 
-  <!-- 🌐 WEB APPOK -->
-  <div class="section">
-    <h2>🌐 Web appok</h2>
+    .header{display:flex;align-items:center;gap:14px}
+    .logo{width:40px;height:40px;border-radius:10px;flex-shrink:0;object-fit:cover}
 
-    <div class="grid">
-      <a class="app" href="/apps/cashhub-app/">
-        <div class="app-row">
-          <img
-            src="/apps/cashhub-app/assets/icon-DeHgDj5S.svg"
-            class="app-icon"
-            alt="Cashback"
-          />
-          <div>
-            <strong>Cashback Hub</strong>
-            <div class="small">Webes cashback alkalmazás</div>
-          </div>
+    h1{margin:0;font-size:28px}
+    p{opacity:.9;margin:6px 0 0}
+
+    .btn{display:inline-block;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.25);
+         text-decoration:none;color:inherit;background:rgba(255,255,255,.06)}
+    .small{font-size:12px;opacity:.75}
+
+    .sections{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;margin-top:22px}
+    .section{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03)}
+    .section h2{margin:0 0 12px 0;font-size:18px;display:flex;align-items:center;gap:10px}
+
+    .grid{display:grid;gap:12px}
+    a.card{display:block;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.12);
+           background:rgba(255,255,255,.06);text-decoration:none;color:inherit}
+    a.card:hover{border-color:rgba(120,220,220,.6)}
+
+    .row{display:flex;align-items:center;gap:12px}
+    .icon{width:32px;height:32px;border-radius:8px;flex-shrink:0;object-fit:cover;background:rgba(255,255,255,.08)}
+    .title{font-weight:700}
+    .desc{font-size:12px;opacity:.75;margin-top:4px}
+
+    .hint{margin-top:10px;opacity:.7;font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="header">
+        <img src="/assets/norbapp-logo.svg" alt="NorbApp" class="logo" />
+        <div>
+          <h1>NorbApp</h1>
+          <p>Web appok és botok gyűjteménye</p>
         </div>
-      </a>
+      </div>
+
+      <div>
+        <a class="btn" href="https://github.com/NorbertDerHorvath/NorbertDerHorvath.github.io/upload/main/zips" target="_blank" rel="noopener">
+          ⬆ ZIP feltöltés
+        </a>
+        <div class="small">(GitHub bejelentkezés szükséges)</div>
+      </div>
+    </div>
+
+    <div class="sections">
+
+      <!-- 🌐 WEB APPOK -->
+      <div class="section">
+        <h2>🌐 Web appok</h2>
+        <div class="grid">
+          <a class="card" href="/apps/cashhub-app/">
+            <div class="row">
+              <!-- Brand ikon a név előtt -->
+              <img class="icon" src="/apps/cashhub-app/assets/icon-DeHgDj5S.svg" alt="Cashback" />
+              <div>
+                <div class="title">Cashback Hub</div>
+                <div class="desc">Webes cashback alkalmazás</div>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- 🤖 TELEGRAM BOTOK -->
+      <div class="section">
+        <h2>🤖 Telegram botok</h2>
+        <div class="grid">
+          <a class="card" href="https://t.me/cashback_bot" target="_blank" rel="noopener">
+            <div class="row">
+              <img class="icon" src="/assets/cashback-bot-logo.svg" alt="Cashback Bot" />
+              <div>
+                <div class="title">Cashback Bot</div>
+                <div class="desc">Automatikus cashback értesítések</div>
+              </div>
+            </div>
+          </a>
+        </div>
+        <div class="hint">A botok a Telegramon nyílnak meg.</div>
+      </div>
+
     </div>
   </div>
-
-  <!-- 🤖 TELEGRAM BOTOK -->
-  <div class="section">
-    <h2>🤖 Telegram botok</h2>
-
-    <div class="grid">
-      <a
-        class="app"
-        href="https://t.me/cashback_bot"
-        target="_blank"
-        rel="noopener"
-      >
-        <div class="app-row">
-          <img
-            src="/assets/cashback-bot-logo.svg"
-            class="app-icon"
-            alt="Cashback Bot"
-          />
-          <div>
-            <strong>Cashback Bot</strong>
-            <div class="small">Automatikus cashback értesítések</div>
-          </div>
-        </div>
-      </a>
-    </div>
-  </div>
-
-</div>
+</body>
+</html>
