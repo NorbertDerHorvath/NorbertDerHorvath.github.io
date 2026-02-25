@@ -1,21 +1,21 @@
 {
   "name": "Cashback Hub",
   "short_name": "Cashback",
-  "description": "made by NorbApp",
-
-  "start_url": "/apps/cashhub-app/",
-  "scope": "/apps/cashhub-app/",
-
+  "description": "Exkluzív, ellenőrzött cashback ajánlatok listája.",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#083344",
   "theme_color": "#083344",
-
   "icons": [
     {
-      "src": "/apps/cashhub-app/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ]
 }
