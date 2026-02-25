@@ -1,11 +1,12 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import React from "react";
+import { createRoot } from "react-dom/client";
+import App from "../App";
 
-export default defineConfig({
-  base: "/apps/cashhub-app/",
-  plugins: [react()],
-  build: {
-    outDir: "dist",
-    emptyOutDir: true,
-  },
-});
+const rootEl = document.getElementById("root");
+if (!rootEl) throw new Error("Root element not found");
+
+createRoot(rootEl).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
