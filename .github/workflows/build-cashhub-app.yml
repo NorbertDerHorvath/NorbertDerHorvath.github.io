@@ -1,10 +1,10 @@
-name: Build & deploy cashhub-app (from apps-src to apps)
+name: Build & deploy cashhub-app (from app-src to apps)
 
 on:
   push:
     branches: ["main"]
     paths:
-      - "apps-src/cashhub-app/**"
+      - "app-src/cashhub-app/**"
       - ".github/workflows/build-cashhub-app.yml"
   workflow_dispatch: {}
 
@@ -30,30 +30,31 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        working-directory: apps-src/cashhub-app
-        run: npm ci
+        working-directory: app-src/cashhub-app
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Build (Vite)
-        working-directory: apps-src/cashhub-app
+        working-directory: app-src/cashhub-app
         env:
-          # fontos: Pages subpath alatt fut
           BASE_PATH: /apps/cashhub-app/
-        run: |
-          # Ha a vite.config.ts nem használ BASE_PATH-ot, ettől még lefut a build,
-          # de a legstabilabb, ha később be is drótozzuk (következő lépésben).
-          npm run build
+        run: npm run build
 
       - name: Verify dist output
         run: |
           set -e
-          test -f apps-src/cashhub-app/dist/index.html
-          echo "apps-src/cashhub-app/dist/index.html OK"
+          test -f app-src/cashhub-app/dist/index.html
+          echo "app-src/cashhub-app/dist/index.html OK"
 
       - name: Deploy dist -> /apps/cashhub-app
         run: |
           set -euo pipefail
           mkdir -p apps/cashhub-app
-          rsync -a --delete apps-src/cashhub-app/dist/ apps/cashhub-app/
+          rsync -a --delete app-src/cashhub-app/dist/ apps/cashhub-app/
           touch .nojekyll
 
       - name: Commit & push deploy
