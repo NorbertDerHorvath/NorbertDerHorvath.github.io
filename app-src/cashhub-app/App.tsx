@@ -1,47 +1,48 @@
-// app-src/cashhub-app/App.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Deal } from './types';
 import { db } from './firebase';
 import { ref, onValue } from "firebase/database";
-/* =======================
-   i18n
-======================= */
 
 type Language = 'hu' | 'en' | 'de';
 
 const translations = {
   hu: {
-    subtitle: 'Privát Lista',
-    error_title: 'Hálózati Hiba',
-    error_msg: 'Az adatok jelenleg nem érhetőek el.',
-    view_deal: 'Megnézem az akciót',
-    empty_list: 'A lista jelenleg frissítés alatt áll',
-    footer: 'Biztonságos kapcsolat • Publikus hozzáférés • Verzió 2.0',
-    syncing: 'Szinkronizálás...',
+    subtitle: "Privát Lista",
+    error_title: "Hálózati Hiba",
+    error_msg: "Az adatok jelenleg nem érhetőek el.",
+    view_deal: "Megnézem az akciót",
+    empty_list: "A lista jelenleg frissítés alatt áll",
+    footer: "Biztonságos kapcsolat • Publikus hozzáférés • Verzió 2.0",
+    syncing: "Szinkronizálás...",
+    expiry_last_day: "Utolsó nap!",
+    expiry_tomorrow: "Holnap lejár",
+    expiry_days: (d: number) => `${d} nap van hátra`,
   },
   en: {
-    subtitle: 'Private List',
-    error_title: 'Network Error',
-    error_msg: 'Data is currently unavailable.',
-    view_deal: 'View Deal',
-    empty_list: 'The list is currently being updated',
-    footer: 'Secure connection • Public access • Version 2.0',
-    syncing: 'Syncing...',
+    subtitle: "Private List",
+    error_title: "Network Error",
+    error_msg: "Data is currently unavailable.",
+    view_deal: "View Deal",
+    empty_list: "The list is currently being updated",
+    footer: "Secure connection • Public access • Version 2.0",
+    syncing: "Syncing...",
+    expiry_last_day: "Last day!",
+    expiry_tomorrow: "Expires tomorrow",
+    expiry_days: (d: number) => `${d} days left`,
   },
   de: {
-    subtitle: 'Private Liste',
-    error_title: 'Netzwerkfehler',
-    error_msg: 'Daten sind derzeit nicht verfügbar.',
-    view_deal: 'Angebot ansehen',
-    empty_list: 'Die Liste wird derzeit aktualisiert',
-    footer: 'Sichere Verbindung • Öffentlicher Zugang • Version 2.0',
-    syncing: 'Synchronisierung...',
-  },
+    subtitle: "Private Liste",
+    error_title: "Netzwerkfehler",
+    error_msg: "Daten sind derzeit nicht verfügbar.",
+    view_deal: "Angebot ansehen",
+    empty_list: "Die Liste wird derzeit aktualisiert",
+    footer: "Sichere Verbindung • Öffentlicher Zugang • Version 2.0",
+    syncing: "Synchronisierung...",
+    expiry_last_day: "Letzter Tag!",
+    expiry_tomorrow: "Läuft morgen ab",
+    expiry_days: (d: number) => `Noch ${d} Tage`,
+  }
 } as const;
-
-/* =======================
-   UI components
-======================= */
 
 const GermanyRibbon = () => (
   <div
@@ -83,13 +84,9 @@ const NorbAppLogo = () => (
       alt="NorbApp"
       className="h-10 w-auto drop-shadow-lg group-hover:scale-105 transition-transform"
     />
-    {/* NorbApp felirat SZÁNDÉKOSAN NINCS */}
+    {/* NorbApp felirat nincs */}
   </a>
 );
-
-/* =======================
-   App
-======================= */
 
 const App: React.FC = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -99,12 +96,21 @@ const App: React.FC = () => {
 
   const t = translations[lang];
 
+  const getRemainingDays = (expiryDate?: string) => {
+    if (!expiryDate) return null;
+    const today0 = new Date();
+    today0.setHours(0, 0, 0, 0);
+    const exp0 = new Date(expiryDate);
+    exp0.setHours(0, 0, 0, 0);
+    const diff = exp0.getTime() - today0.getTime();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
+
   useEffect(() => {
     setLoading(true);
     setError(null);
 
     const dealsRef = ref(db, 'deals');
-
     const unsubscribe = onValue(
       dealsRef,
       (snapshot) => {
@@ -120,8 +126,7 @@ const App: React.FC = () => {
           const list = Object.entries(data)
             .map(([id, val]: any) => ({ ...val, id }) as Deal)
             .filter((d: any) => {
-              const isReady =
-                String(d.isReady) === 'true' || String(d.isready) === 'true';
+              const isReady = String(d.isReady) === "true" || String(d.isready) === "true";
               const isNotExpired = !d.expiryDate || d.expiryDate >= today;
               return isReady && isNotExpired;
             })
@@ -130,7 +135,7 @@ const App: React.FC = () => {
             );
 
           setDeals(list);
-        } catch (e) {
+        } catch {
           setError(t.error_msg);
         } finally {
           setLoading(false);
@@ -160,10 +165,8 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-[#083344] text-slate-100 pb-10">
       <GermanyRibbon />
 
-      {/* HEADER */}
       <header className="sticky top-0 z-50 bg-[#083344]/95 backdrop-blur-2xl border-b border-white/5 shadow-2xl">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          {/* Left group */}
           <div className="flex items-center gap-4 min-w-0 flex-wrap">
             <NorbAppLogo />
 
@@ -175,7 +178,6 @@ const App: React.FC = () => {
                 alt="Cashback Hub"
                 className="h-10 w-10 drop-shadow-xl shrink-0"
               />
-
               <div className="min-w-0">
                 <h1 className="text-base sm:text-lg font-black tracking-tight uppercase leading-tight truncate">
                   Cashback Hub
@@ -187,7 +189,6 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          {/* Right group */}
           <div className="flex items-center justify-center md:justify-end">
             <div className="flex items-center bg-white/5 rounded-xl p-1 border border-white/10">
               {(['hu', 'en', 'de'] as Language[]).map((l) => (
@@ -208,7 +209,6 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* MAIN */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         {error ? (
           <div className="max-w-md mx-auto bg-rose-500/10 border border-rose-500/20 p-8 rounded-3xl text-center">
@@ -220,39 +220,60 @@ const App: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {deals.length > 0 ? (
-              deals.map((deal: any) => (
-                <div
-                  key={deal.id}
-                  className="bg-slate-900/40 border border-white/5 rounded-3xl overflow-hidden flex flex-col"
-                >
-                  {/* Deal image (ha van) */}
-                  {deal.imageUrl ? (
-                    <div className="bg-black/10 border-b border-white/5">
-                      <img
-                        src={deal.imageUrl}
-                        alt=""
-                        className="w-full h-44 object-cover"
-                        loading="lazy"
-                      />
+              deals.map((deal: any) => {
+                const days = getRemainingDays(deal.expiryDate);
+                const badgeText =
+                  days === null ? null :
+                  days <= 0 ? t.expiry_last_day :
+                  days === 1 ? t.expiry_tomorrow :
+                  t.expiry_days(days);
+
+                const badgeClass =
+                  days !== null && days <= 3
+                    ? "bg-rose-500/90 text-white"
+                    : "bg-cyan-500/90 text-cyan-950";
+
+                return (
+                  <div
+                    key={deal.id}
+                    className="bg-slate-900/40 border border-white/5 rounded-3xl overflow-hidden flex flex-col"
+                  >
+                    <div className="relative bg-black/10 border-b border-white/5">
+                      {deal.imageUrl ? (
+                        <img
+                          src={deal.imageUrl}
+                          alt=""
+                          className="w-full h-44 object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-44" />
+                      )}
+
+                      {badgeText && (
+                        <div className={`absolute top-3 left-3 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg ${badgeClass}`}>
+                          {badgeText}
+                        </div>
+                      )}
                     </div>
-                  ) : null}
 
-                  <div className="p-6 flex-1 flex flex-col">
-                    <h3 className="font-black uppercase tracking-tight text-white mb-4 line-clamp-2">
-                      {deal.title}
-                    </h3>
+                    <div className="p-6 flex-1 flex flex-col">
+                      <h3 className="font-black uppercase tracking-tight text-white mb-4 line-clamp-2">
+                        {deal.title}
+                      </h3>
 
-                    <a
-                      href={deal.finalLink || deal.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-auto block bg-cyan-500 text-cyan-950 py-3 rounded-xl text-center font-black uppercase text-xs tracking-widest active:scale-95 transition-transform"
-                    >
-                      {t.view_deal}
-                    </a>
+                      <a
+                        href={deal.finalLink || deal.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-auto block bg-cyan-500 text-cyan-950 py-3 rounded-xl text-center font-black uppercase text-xs tracking-widest active:scale-95 transition-transform"
+                      >
+                        {t.view_deal}
+                      </a>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="col-span-full py-24 text-center opacity-25">
                 <p className="text-cyan-500 font-bold uppercase tracking-[0.5em] text-xs">
@@ -264,7 +285,6 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* FOOTER */}
       <footer className="text-center text-[9px] text-cyan-500/40 uppercase tracking-[0.4em] py-10">
         {t.footer}
       </footer>
