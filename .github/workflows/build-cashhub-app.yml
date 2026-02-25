@@ -28,18 +28,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: app-src/cashhub-app/package-lock.json
 
       - name: Install deps
         working-directory: app-src/cashhub-app
         run: |
           set -e
-          if [ -f package-lock.json ]; then
-            npm install
-          else
-            npm install
-          fi
+          npm install
 
       - name: Build
         working-directory: app-src/cashhub-app
@@ -53,7 +47,6 @@ jobs:
           set -e
           mkdir -p apps/cashhub-app
           rsync -a --delete app-src/cashhub-app/dist/ apps/cashhub-app/
-          # Pages/Jekyll megkerülés
           touch .nojekyll
           touch apps/cashhub-app/.nojekyll
 
