@@ -2,8 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Deal } from './types';
 import { db } from './firebase';
-import { ref, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-
+import { ref, onValue } from "firebase/database";
 /* =======================
    i18n
 ======================= */
