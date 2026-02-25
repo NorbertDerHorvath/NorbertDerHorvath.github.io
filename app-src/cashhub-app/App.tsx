@@ -82,8 +82,8 @@ const GermanyFlag = () => (
 );
 
 const GermanyRibbon = () => (
-  <div className="fixed top-0 right-0 z-[100] pointer-events-none overflow-hidden w-40 h-40">
-    <div className="absolute top-0 right-0 w-[170%] h-12 transform rotate-45 translate-x-[30%] translate-y-[40%] shadow-2xl flex flex-col">
+  <div className="fixed top-0 right-0 z-[100] pointer-events-none overflow-hidden w-40 h-40 opacity-15 blur-[0.5px] saturate-75">
+    <div className="absolute top-0 right-0 w-[170%] h-12 transform rotate-45 translate-x-[30%] translate-y-[40%] flex flex-col">
       <div className="h-1/3 bg-black"></div>
       <div className="h-1/3 bg-[#FF0000]"></div>
       <div className="h-1/3 bg-[#FFCC00]"></div>
