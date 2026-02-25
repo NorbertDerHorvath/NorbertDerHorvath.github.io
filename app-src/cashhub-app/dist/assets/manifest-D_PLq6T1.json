@@ -1,15 +1,18 @@
-
 {
   "name": "Cashback Hub",
   "short_name": "Cashback",
   "description": "Exkluzív, ellenőrzött cashback ajánlatok listája.",
-  "start_url": ".",
+
+  "start_url": "/apps/cashhub-app/",
+  "scope": "/apps/cashhub-app/",
+
   "display": "standalone",
   "background_color": "#083344",
   "theme_color": "#083344",
+
   "icons": [
     {
-      "src": "icon.svg",
+      "src": "/apps/cashhub-app/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
