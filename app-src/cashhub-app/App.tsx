@@ -423,11 +423,6 @@ const App: React.FC = () => {
                   <span className="text-[10px] font-black uppercase tracking-widest text-white hidden sm:inline">{t.install}</span>
                 </button>
               )}
-              
-              <div className="flex items-center gap-2 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
-                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">Live</span>
-              </div>
             </div>
           </div>
         </div>
