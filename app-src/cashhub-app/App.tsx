@@ -115,13 +115,10 @@ const NorbAppLogo = () => (
     className="flex items-center gap-3 group"
   >
     <img
-      src="/apps/cashhub-app/icons/file_00000000d63c720aab5f44c41c035253.png"
+      src="/apps/cashhub-app/icons/norbapp.png"
       alt="NorbApp"
       className="h-10 w-auto drop-shadow-lg group-hover:scale-105 transition-transform"
     />
-    <span className="text-xl font-black tracking-tighter bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent uppercase">
-      NorbApp
-    </span>
   </a>
 );
 
