@@ -129,4 +129,147 @@ const NorbAppLogo = () => (
    App
 ======================= */
 
-const App: React
+const App: React.FC = () => {
+  const [deals, setDeals] = useState<Deal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lang, setLang] = useState<Language>('hu');
+
+  const t = translations[lang];
+
+  useEffect(() => {
+    const dealsRef = ref(db, 'deals');
+
+    const unsubscribe = onValue(dealsRef, snapshot => {
+      try {
+        const data = snapshot.val();
+        if (!data) {
+          setDeals([]);
+          return;
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+
+        const list = Object.entries(data)
+          .map(([id, val]: any) => ({ ...val, id }))
+          .filter(d =>
+            (String(d.isReady) === "true" || String(d.isready) === "true") &&
+            (!d.expiryDate || d.expiryDate >= today)
+          )
+          .sort((a, b) =>
+            (a.expiryDate || '9999').localeCompare(b.expiryDate || '9999')
+          );
+
+        setDeals(list);
+      } catch {
+        setError(t.error_msg);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [lang]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#083344] flex flex-col items-center justify-center">
+        <div className="w-12 h-12 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
+        <p className="text-cyan-500/50 text-xs font-bold uppercase tracking-[0.2em] animate-pulse">
+          {t.syncing}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#083344] text-slate-100 pb-10">
+      <GermanyRibbon />
+
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 bg-[#083344]/95 backdrop-blur-2xl border-b border-white/5 shadow-2xl">
+        <div className="max-w-6xl mx-auto px-6 py-5 flex flex-col md:flex-row justify-between items-center gap-4">
+
+          <div className="flex items-center gap-6">
+            <NorbAppLogo />
+            <div className="h-8 w-px bg-white/10 hidden md:block"></div>
+
+            <div className="flex items-center gap-4">
+              <img
+                src="/apps/cashhub-app/icons/file_00000000db98720a9cbb5b5d33fda3f5.png"
+                alt="Cashback Hub"
+                className="h-10 w-10 drop-shadow-xl"
+              />
+              <div className="hidden xs:block">
+                <h1 className="text-lg font-black tracking-tight uppercase">
+                  Cashback Hub
+                </h1>
+                <p className="text-[9px] text-cyan-400 font-bold uppercase tracking-[0.2em] mt-1 opacity-70">
+                  {t.subtitle}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Language switcher */}
+          <div className="flex items-center bg-white/5 rounded-xl p-1 border border-white/10">
+            {(['hu', 'en', 'de'] as Language[]).map(l => (
+              <button
+                key={l}
+                onClick={() => setLang(l)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${
+                  lang === l
+                    ? 'bg-cyan-500 text-cyan-950 shadow-lg'
+                    : 'text-white/40 hover:text-white/70'
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      {/* MAIN */}
+      <main className="max-w-6xl mx-auto px-6 py-10">
+        {error ? (
+          <div className="max-w-md mx-auto bg-rose-500/10 border border-rose-500/20 p-8 rounded-3xl text-center">
+            <p className="text-rose-400 font-bold text-sm mb-2 uppercase tracking-widest">
+              {t.error_title}
+            </p>
+            <p className="text-rose-400/60 text-xs">{error}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {deals.length > 0 ? deals.map(deal => (
+              <div key={deal.id} className="bg-slate-900/40 border border-white/5 rounded-3xl p-6">
+                <h3 className="font-bold mb-4">{deal.title}</h3>
+                <a
+                  href={deal.finalLink || deal.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block bg-cyan-500 text-cyan-950 py-3 rounded-xl text-center font-black uppercase text-xs tracking-widest"
+                >
+                  {t.view_deal}
+                </a>
+              </div>
+            )) : (
+              <div className="col-span-full py-32 text-center opacity-20">
+                <p className="text-cyan-500 font-bold uppercase tracking-[0.5em] text-xs">
+                  {t.empty_list}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+
+      {/* FOOTER */}
+      <footer className="text-center text-[9px] text-cyan-500/40 uppercase tracking-[0.4em] py-10">
+        {t.footer}
+      </footer>
+    </div>
+  );
+};
+
+export default App;
