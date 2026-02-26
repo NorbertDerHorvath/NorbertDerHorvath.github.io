@@ -1,178 +1,202 @@
-import React, { useEffect, useState } from "react";
-import { ref, onValue } from "firebase/database";
-import { db } from "./firebase";
-import { Deal } from "./types";
+import React, { useState, useEffect } from 'react';
+import { Deal } from './types';
+import { db } from './firebase';
+import { jsPDF } from 'jspdf';
+import { ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-type Language = "hu" | "en" | "de";
+/* =======================
+   i18n
+======================= */
+
+type Language = 'hu' | 'en' | 'de';
 
 const translations = {
   hu: {
     subtitle: "Privát Lista",
+    export: "PDF Export",
+    error_title: "Hálózati Hiba",
+    error_msg: "Az adatok jelenleg nem érhetőek el.",
     view_deal: "Megnézem az akciót",
     empty_list: "A lista jelenleg frissítés alatt áll",
-    expiry_last_day: "Utolsó nap!",
-    expiry_tomorrow: "Holnap lejár",
-    expiry_days: (d: number) => `${d} nap van hátra`,
+    footer: "Biztonságos kapcsolat • Publikus hozzáférés • Verzió 2.0"
   },
   en: {
     subtitle: "Private List",
+    export: "PDF Export",
+    error_title: "Network Error",
+    error_msg: "Data is currently unavailable.",
     view_deal: "View Deal",
     empty_list: "The list is currently being updated",
-    expiry_last_day: "Last day!",
-    expiry_tomorrow: "Expires tomorrow",
-    expiry_days: (d: number) => `${d} days left`,
+    footer: "Secure connection • Public access • Version 2.0"
   },
   de: {
     subtitle: "Private Liste",
+    export: "PDF Export",
+    error_title: "Netzwerkfehler",
+    error_msg: "Daten sind derzeit nicht verfügbar.",
     view_deal: "Angebot ansehen",
     empty_list: "Die Liste wird derzeit aktualisiert",
-    expiry_last_day: "Letzter Tag!",
-    expiry_tomorrow: "Läuft morgen ab",
-    expiry_days: (d: number) => `Noch ${d} Tage`,
-  },
-} as const;
-
-const getRemainingDays = (expiryDate?: string) => {
-  if (!expiryDate) return null;
-  const today0 = new Date();
-  today0.setHours(0, 0, 0, 0);
-  const exp0 = new Date(expiryDate);
-  exp0.setHours(0, 0, 0, 0);
-  const diff = exp0.getTime() - today0.getTime();
-  return Math.ceil(diff / 86400000);
+    footer: "Sichere Verbindung • Öffentlicher Zugang • Version 2.0"
+  }
 };
+
+/* =======================
+   UI
+======================= */
+
+const GermanyRibbon = () => (
+  <div className="fixed top-0 right-0 z-20 pointer-events-none opacity-30">
+    <div className="w-40 h-12 rotate-45 translate-x-20 translate-y-6 flex flex-col">
+      <div className="h-1/3 bg-black/70"></div>
+      <div className="h-1/3 bg-red-600/70"></div>
+      <div className="h-1/3 bg-yellow-400/70"></div>
+    </div>
+  </div>
+);
+
+const NorbAppLogo = () => (
+  <a
+    href="https://norbertderhorvath.github.io"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="shrink-0"
+  >
+    <img
+      src="/apps/cashhub-app/icons/norbapp-v2.png"
+      alt="NorbApp"
+      className="h-20 w-auto drop-shadow-lg"
+    />
+  </a>
+);
+
+/* =======================
+   App
+======================= */
 
 const App: React.FC = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
-  const [lang, setLang] = useState<Language>("hu");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lang, setLang] = useState<Language>('hu');
 
   const t = translations[lang];
 
   useEffect(() => {
-    const dealsRef = ref(db, "deals");
+    const dealsRef = ref(db, 'deals');
+    const unsub = onValue(dealsRef, snap => {
+      try {
+        const data = snap.val();
+        if (!data) {
+          setDeals([]);
+          return;
+        }
 
-    return onValue(dealsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (!data) {
-        setDeals([]);
-        return;
+        const today = new Date().toISOString().split('T')[0];
+
+        const list = Object.entries(data)
+          .map(([id, val]: any) => ({ ...val, id }))
+          .filter(d =>
+            (String(d.isReady) === "true" || String(d.isready) === "true") &&
+            (!d.expiryDate || d.expiryDate >= today)
+          );
+
+        setDeals(list);
+      } catch {
+        setError(t.error_msg);
+      } finally {
+        setLoading(false);
       }
-
-      const todayStr = new Date().toISOString().split("T")[0];
-
-      const list = Object.entries(data)
-        .map(([id, val]: any) => ({ ...val, id }) as Deal)
-        .filter((d: any) => {
-          const isReady = String(d.isReady) === "true" || String(d.isready) === "true";
-          const isNotExpired = !d.expiryDate || d.expiryDate >= todayStr;
-          return isReady && isNotExpired;
-        })
-        .sort((a: any, b: any) => (a.expiryDate || "9999").localeCompare(b.expiryDate || "9999"));
-
-      setDeals(list);
     });
-  }, []);
+
+    return () => unsub();
+  }, [lang]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#083344]">
+        <div className="animate-spin w-10 h-10 border-2 border-cyan-500 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#083344] text-slate-100 pb-10">
-      <header className="sticky top-0 z-50 bg-[#083344]/95 backdrop-blur-2xl border-b border-white/10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0 flex-wrap">
-            {/* NorbApp logo (nincs felirat) */}
-            <a href="https://norbertderhorvath.github.io" target="_blank" rel="noopener noreferrer" className="shrink-0">
-              <img
-                src={`${import.meta.env.BASE_URL}icons/norbapp.png`}
-                alt="NorbApp"
-                className="h-9 w-auto drop-shadow-lg"
-              />
-            </a>
+    <div className="min-h-screen bg-[#083344] text-slate-100">
+      <GermanyRibbon />
 
-            <div className="hidden md:block h-8 w-px bg-white/20" />
+      {/* HEADER */}
+      <header className="sticky top-0 z-40 bg-[#083344]/95 backdrop-blur border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
 
-            {/* App logo */}
-            <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-6 min-w-0">
+            <NorbAppLogo />
+
+            <div className="flex items-center gap-4 min-w-0">
               <img
-                src={`${import.meta.env.BASE_URL}icons/cashhub.png`}
+                src="/apps/cashhub-app/icons/cashhub-v2.png"
                 alt="Cashback Hub"
-                className="h-9 w-9 drop-shadow-xl shrink-0"
+                className="h-20 w-auto drop-shadow-xl shrink-0"
               />
-              <div className="min-w-0">
-                <h1 className="text-base sm:text-lg font-black tracking-tight uppercase leading-tight truncate">
+              <div className="hidden md:block">
+                <h1 className="text-xl font-black uppercase leading-tight">
                   Cashback Hub
                 </h1>
-                <p className="text-[9px] text-cyan-400 font-bold uppercase tracking-[0.2em] mt-1 opacity-70 truncate">
+                <p className="text-xs text-cyan-400 uppercase tracking-widest">
                   {t.subtitle}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Language */}
-          <div className="flex items-center justify-center md:justify-end">
-            <div className="flex items-center bg-white/10 rounded-xl p-1 border border-white/10">
-              {(["hu", "en", "de"] as Language[]).map((l) => (
-                <button
-                  key={l}
-                  onClick={() => setLang(l)}
-                  className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${
-                    lang === l ? "bg-cyan-500 text-cyan-950 shadow-lg" : "text-white/50 hover:text-white/80"
-                  }`}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
+          {/* LANG */}
+          <div className="flex bg-white/5 rounded-xl p-1">
+            {(['hu', 'en', 'de'] as Language[]).map(l => (
+              <button
+                key={l}
+                onClick={() => setLang(l)}
+                className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${
+                  lang === l
+                    ? 'bg-cyan-500 text-cyan-950'
+                    : 'text-white/50 hover:text-white'
+                }`}
+              >
+                {l}
+              </button>
+            ))}
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        {deals.length === 0 ? (
-          <div className="col-span-full py-24 text-center opacity-30">
-            <p className="text-cyan-300 font-bold uppercase tracking-[0.35em] text-xs">{t.empty_list}</p>
-          </div>
+      {/* MAIN */}
+      <main className="max-w-7xl mx-auto px-6 py-10">
+        {error ? (
+          <div className="text-center text-red-400">{t.error_title}</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {deals.map((deal: any) => {
-              const days = getRemainingDays(deal.expiryDate);
-              const badgeText =
-                days === null ? null : days <= 0 ? t.expiry_last_day : days === 1 ? t.expiry_tomorrow : t.expiry_days(days);
-              const badgeClass = days !== null && days <= 3 ? "bg-rose-500/90 text-white" : "bg-cyan-500/90 text-cyan-950";
-
-              return (
-                <div key={deal.id} className="bg-slate-900/40 border border-white/10 rounded-3xl overflow-hidden flex flex-col">
-                  <div className="relative bg-black/10 border-b border-white/10">
-                    {deal.imageUrl ? (
-                      <img src={deal.imageUrl} alt="" className="w-full h-44 object-cover" loading="lazy" />
-                    ) : (
-                      <div className="w-full h-44" />
-                    )}
-
-                    {badgeText && (
-                      <div className={`absolute top-3 left-3 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg ${badgeClass}`}>
-                        {badgeText}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-6 flex-1 flex flex-col">
-                    <h3 className="font-black uppercase tracking-tight text-white mb-4 line-clamp-2">{deal.title}</h3>
-
-                    <a
-                      href={deal.finalLink || deal.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-auto block bg-cyan-500 text-cyan-950 py-3 rounded-xl text-center font-black uppercase text-xs tracking-widest active:scale-95 transition-transform"
-                    >
-                      {t.view_deal}
-                    </a>
-                  </div>
-                </div>
-              );
-            })}
+            {deals.length ? deals.map(d => (
+              <div key={d.id} className="bg-slate-900/40 rounded-2xl p-6">
+                <h3 className="font-bold mb-4">{d.title}</h3>
+                <a
+                  href={d.finalLink || d.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-center bg-cyan-500 text-cyan-950 py-3 rounded-xl font-black uppercase text-xs tracking-widest"
+                >
+                  {t.view_deal}
+                </a>
+              </div>
+            )) : (
+              <div className="col-span-full text-center opacity-30">
+                {t.empty_list}
+              </div>
+            )}
           </div>
         )}
       </main>
+
+      {/* FOOTER */}
+      <footer className="text-center text-[10px] text-cyan-500/40 py-10 uppercase tracking-widest">
+        {t.footer}
+      </footer>
     </div>
   );
 };
