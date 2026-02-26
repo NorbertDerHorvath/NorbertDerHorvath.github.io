@@ -18,7 +18,8 @@ const translations = {
     error_msg: "Az adatok jelenleg nem érhetőek el.",
     view_deal: "Megnézem az akciót",
     empty_list: "A lista jelenleg frissítés alatt áll",
-    footer: "Biztonságos kapcsolat • Publikus hozzáférés • Verzió 2.0"
+    footer: "Biztonságos kapcsolat • Publikus hozzáférés • Verzió 2.0",
+    syncing: "Szinkronizálás..."
   },
   en: {
     subtitle: "Private List",
@@ -27,7 +28,8 @@ const translations = {
     error_msg: "Data is currently unavailable.",
     view_deal: "View Deal",
     empty_list: "The list is currently being updated",
-    footer: "Secure connection • Public access • Version 2.0"
+    footer: "Secure connection • Public access • Version 2.0",
+    syncing: "Syncing..."
   },
   de: {
     subtitle: "Private Liste",
@@ -36,7 +38,8 @@ const translations = {
     error_msg: "Daten sind derzeit nicht verfügbar.",
     view_deal: "Angebot ansehen",
     empty_list: "Die Liste wird derzeit aktualisiert",
-    footer: "Sichere Verbindung • Öffentlicher Zugang • Version 2.0"
+    footer: "Sichere Verbindung • Öffentlicher Zugang • Version 2.0",
+    syncing: "Synchronisierung..."
   }
 };
 
@@ -61,6 +64,7 @@ const NorbAppLogo = () => (
     rel="noopener noreferrer"
     className="shrink-0"
   >
+    {/* FONTOS: public/icons/ → /icons/ alatt lesz elérhető build után */}
     <img
       src="/apps/cashhub-app/icons/norbapp-v2.png"
       alt="NorbApp"
@@ -113,34 +117,38 @@ const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#083344]">
-        <div className="animate-spin w-10 h-10 border-2 border-cyan-500 border-t-transparent rounded-full"></div>
+      <div className="min-h-screen bg-[#083344] flex flex-col items-center justify-center">
+        <div className="w-12 h-12 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
+        <p className="text-cyan-500/50 text-xs font-bold uppercase tracking-[0.2em] animate-pulse">
+          {t.syncing}
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#083344] text-slate-100">
+    <div className="min-h-screen bg-[#083344] text-slate-100 pb-10">
       <GermanyRibbon />
 
       {/* HEADER */}
       <header className="sticky top-0 z-40 bg-[#083344]/95 backdrop-blur border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
-
           <div className="flex items-center gap-6 min-w-0">
             <NorbAppLogo />
 
             <div className="flex items-center gap-4 min-w-0">
+              {/* FONTOS: public/icons/ → /icons/ */}
               <img
                 src="/apps/cashhub-app/icons/cashhub-v2.png"
                 alt="Cashback Hub"
                 className="h-20 w-auto drop-shadow-xl shrink-0"
               />
-              <div className="hidden md:block">
-                <h1 className="text-xl font-black uppercase leading-tight">
+
+              <div className="hidden md:block min-w-0">
+                <h1 className="text-xl font-black uppercase leading-tight truncate">
                   Cashback Hub
                 </h1>
-                <p className="text-xs text-cyan-400 uppercase tracking-widest">
+                <p className="text-xs text-cyan-400 uppercase tracking-widest truncate">
                   {t.subtitle}
                 </p>
               </div>
@@ -148,12 +156,12 @@ const App: React.FC = () => {
           </div>
 
           {/* LANG */}
-          <div className="flex bg-white/5 rounded-xl p-1">
+          <div className="flex bg-white/5 rounded-xl p-1 shrink-0">
             {(['hu', 'en', 'de'] as Language[]).map(l => (
               <button
                 key={l}
                 onClick={() => setLang(l)}
-                className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${
+                className={`px-3 py-1 rounded-lg text-xs font-bold uppercase transition-all ${
                   lang === l
                     ? 'bg-cyan-500 text-cyan-950'
                     : 'text-white/50 hover:text-white'
@@ -169,11 +177,11 @@ const App: React.FC = () => {
       {/* MAIN */}
       <main className="max-w-7xl mx-auto px-6 py-10">
         {error ? (
-          <div className="text-center text-red-400">{t.error_title}</div>
+          <div className="text-center text-rose-400 font-bold">{t.error_title}</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {deals.length ? deals.map(d => (
-              <div key={d.id} className="bg-slate-900/40 rounded-2xl p-6">
+              <div key={d.id} className="bg-slate-900/40 rounded-2xl p-6 border border-white/5">
                 <h3 className="font-bold mb-4">{d.title}</h3>
                 <a
                   href={d.finalLink || d.link}
