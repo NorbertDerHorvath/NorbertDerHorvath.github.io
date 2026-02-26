@@ -1,4 +1,4 @@
-name: Unzip ZIPs and update index
+name: Unzip ZIPs into /apps (no index overwrite)
 
 on:
   push:
@@ -10,26 +10,29 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  unzip:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Install tools
-        run: sudo apt-get update && sudo apt-get install -y unzip rsync
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip rsync
 
-      - name: Unzip ZIPs into /apps
+      - name: Unzip all ZIPs into /apps
         run: |
           set -euo pipefail
           mkdir -p apps /tmp/unzip
-
           shopt -s nullglob
+
           for z in zips/**/*.zip zips/*.zip; do
-            echo "==> Processing $z"
+            echo "==> Processing: $z"
             app="$(basename "$z" .zip)"
+
             rm -rf /tmp/unzip/*
             unzip -q "$z" -d /tmp/unzip
 
@@ -39,81 +42,28 @@ jobs:
             fi
 
             if [ ! -f "$src/index.html" ]; then
-              echo "❌ index.html hiányzik a ZIP-ben: $z"
+              echo "❌ ERROR: index.html hiányzik a ZIP-ben: $z"
               exit 1
             fi
 
             rm -rf "apps/$app"
             mkdir -p "apps/$app"
             rsync -a --delete "$src"/ "apps/$app"/
-
-            echo "✅ App frissítve: $app"
+            echo "✅ Updated: apps/$app"
           done
-
-      - name: Generate index.html (auto app list + upload button)
-        run: |
-          set -e
-          cat > index.html <<'HTML'
-          <!doctype html>
-          <html lang="hu">
-          <head>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width,initial-scale=1" />
-            <title>NorbApp</title>
-            <style>
-              body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;background:#0b1220;color:#e8eefc}
-              .wrap{max-width:980px;margin:0 auto;padding:28px}
-              .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-              h1{margin:0;font-size:28px}
-              p{opacity:.9}
-              .btn{display:inline-block;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.25);
-                   text-decoration:none;color:inherit;background:rgba(255,255,255,.06)}
-              .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}
-              a.app{display:block;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.12);
-                    background:rgba(255,255,255,.06);text-decoration:none;color:inherit}
-              a.app:hover{border-color:rgba(120,220,220,.6)}
-              .small{font-size:12px;opacity:.75}
-            </style>
-          </head>
-          <body>
-            <div class="wrap">
-              <div class="top">
-                <div>
-                  <h1>NorbApp</h1>
-                  <p>Elérhető appok:</p>
-                </div>
-                <div>
-                  <a class="btn" href="https://github.com/NorbertDerHorvath/NorbertDerHorvath.github.io/upload/main/zips" target="_blank" rel="noopener">
-                    ⬆ ZIP feltöltés
-                  </a>
-                  <div class="small">(GitHub bejelentkezés szükséges)</div>
-                </div>
-              </div>
-
-              <div class="grid">
-          HTML
-
-          shopt -s nullglob
-          for d in apps/*; do
-            if [ -d "$d" ]; then
-              name="$(basename "$d")"
-              echo "<a class=\"app\" href=\"/apps/$name/\">$name</a>" >> index.html
-            fi
-          done
-
-          cat >> index.html <<'HTML'
-              </div>
-            </div>
-          </body>
-          </html>
-          HTML
 
           touch .nojekyll
 
-      - name: Commit & push changes
+      - name: Commit & push changes (if any)
         run: |
+          set -e
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Auto unzip ZIPs and update index" || echo "No changes to commit"
-          git push
+
+          if git status --porcelain | grep -q .; then
+            git add -A
+            git commit -m "Auto unzip ZIPs to /apps (keep custom index.html)"
+            git push
+          else
+            echo "No changes."
+          fi
