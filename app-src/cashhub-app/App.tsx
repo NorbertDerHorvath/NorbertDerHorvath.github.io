@@ -90,7 +90,7 @@ const NorbAppLogo = () => (
   >
     {/* vissza kicsire + RELATÍV útvonal (stabil Pages-en) */}
     <img
-      src="./icons/norbapp.png"
+      src="./icons/norbapp-v2.png"
       alt="NorbApp"
       className="h-14 w-auto drop-shadow-lg transition-transform group-hover:scale-[1.02]"
       loading="eager"
@@ -196,7 +196,7 @@ const App: React.FC = () => {
             {/* App ikon + szlogen (NINCS Cashback Hub felirat) */}
             <div className="flex items-center gap-3 min-w-0">
               <img
-                src="./icons/cashhub.png"
+                src="./icons/cashhub-v2.png"
                 alt="Cashback Hub"
                 className="h-14 w-auto drop-shadow-xl shrink-0"
                 loading="eager"
