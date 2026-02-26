@@ -12,6 +12,7 @@ type Language = "hu" | "en" | "de";
 const translations = {
   hu: {
     subtitle: "Privát Lista",
+    slogan: "Ahol a % nem csak dísz.", // ← szellemes szlogen
     error_title: "Hálózati Hiba",
     error_msg: "Az adatok jelenleg nem érhetőek el.",
     view_deal: "Megnézem az akciót",
@@ -22,6 +23,7 @@ const translations = {
   },
   en: {
     subtitle: "Private List",
+    slogan: "Where % actually means money.",
     error_title: "Network Error",
     error_msg: "Data is currently unavailable.",
     view_deal: "View Deal",
@@ -32,6 +34,7 @@ const translations = {
   },
   de: {
     subtitle: "Private Liste",
+    slogan: "Wo % nicht nur Deko ist.",
     error_title: "Netzwerkfehler",
     error_msg: "Daten sind derzeit nicht verfügbar.",
     view_deal: "Angebot ansehen",
@@ -82,12 +85,15 @@ const NorbAppLogo = () => (
     target="_blank"
     rel="noopener noreferrer"
     className="flex items-center gap-3 group shrink-0"
+    aria-label="NorbApp"
+    title="NorbApp"
   >
-    {/* 2× magasabb: h-20 -> h-40 */}
+    {/* vissza kicsire + RELATÍV útvonal (stabil Pages-en) */}
     <img
-      src="/apps/cashhub-app/icons/norbapp.png"
+      src="./icons/norbapp.png"
       alt="NorbApp"
-      className="h-40 w-auto drop-shadow-lg transition-transform group-hover:scale-[1.02]"
+      className="h-14 w-auto drop-shadow-lg transition-transform group-hover:scale-[1.02]"
+      loading="eager"
     />
   </a>
 );
@@ -184,24 +190,20 @@ const App: React.FC = () => {
       {/* HEADER */}
       <header className="sticky top-0 z-40 bg-[#083344]/95 backdrop-blur-2xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
-          <div className="flex items-center gap-6 min-w-0">
+          <div className="flex items-center gap-4 min-w-0">
             <NorbAppLogo />
 
-            <div className="flex items-center gap-4 min-w-0">
+            {/* App ikon + szlogen (NINCS Cashback Hub felirat) */}
+            <div className="flex items-center gap-3 min-w-0">
               <img
-                src="/apps/cashhub-app/icons/cashhub.png"
+                src="./icons/cashhub.png"
                 alt="Cashback Hub"
-                className="h-20 w-auto drop-shadow-xl shrink-0"
+                className="h-14 w-auto drop-shadow-xl shrink-0"
+                loading="eager"
               />
-
-              <div className="hidden md:block min-w-0">
-                <h1 className="text-xl font-black uppercase leading-tight truncate">
-                  Cashback Hub
-                </h1>
-                <p className="text-xs text-cyan-400 uppercase tracking-widest truncate">
-                  {t.subtitle}
-                </p>
-              </div>
+              <p className="hidden md:block text-xs text-cyan-300/80 font-bold uppercase tracking-[0.2em] truncate">
+                {t.slogan}
+              </p>
             </div>
           </div>
 
@@ -222,63 +224,7 @@ const App: React.FC = () => {
             ))}
           </div>
         </div>
-      </header>
 
-      {/* MAIN */}
-      <main className="max-w-7xl mx-auto px-6 py-10">
-        {error ? (
-          <div className="max-w-md mx-auto bg-rose-500/10 border border-rose-500/20 p-8 rounded-3xl text-center">
-            <p className="text-rose-400 font-bold text-sm mb-2 uppercase tracking-widest">
-              {t.error_title}
-            </p>
-            <p className="text-rose-400/60 text-xs">{error}</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {deals.length > 0 ? (
-              deals.map((deal) => (
-                <div
-                  key={deal.id}
-                  className="group bg-slate-900/40 backdrop-blur-sm border border-white/5 rounded-[2rem] overflow-hidden flex flex-col hover:border-cyan-500/40 transition-all duration-500 hover:shadow-2xl hover:shadow-cyan-500/10"
-                >
-                  {/* KÉP RÉSZ – ez hiányzott / elbukott korábban */}
-                  <div className="h-52 bg-slate-800 relative overflow-hidden">
-                    <DealImage src={(deal as any).imageUrl} alt={t.img_alt} />
-                  </div>
-
-                  <div className="p-7 flex-1 flex flex-col">
-                    <h3 className="text-lg font-bold text-white mb-6 line-clamp-2 min-h-[3rem] leading-tight group-hover:text-cyan-400 transition-colors uppercase tracking-tight">
-                      {deal.title}
-                    </h3>
-
-                    <a
-                      href={deal.finalLink || deal.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-auto w-full bg-cyan-500 text-cyan-950 hover:bg-white hover:text-cyan-950 py-4 rounded-2xl font-black text-center text-[11px] uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95"
-                    >
-                      {t.view_deal}
-                    </a>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full py-32 text-center opacity-20">
-                <p className="text-cyan-500 font-bold uppercase tracking-[0.5em] text-xs">
-                  {t.empty_list}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-      </main>
-
-      {/* FOOTER */}
-      <footer className="text-center text-[9px] text-cyan-500/40 uppercase tracking-[0.4em] py-10">
-        {t.footer}
-      </footer>
-    </div>
-  );
-};
-
-export default App;
+        {/* mobilon a szlogen külön sorba (hogy ne essen szét) */}
+        <div className="md:hidden px-6 pb-3">
+          <p
